@@ -112,8 +112,8 @@ SentiScope-AI/
 
 1. **Clone your fork**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/ReviewLens.git
-   cd ReviewLens
+   git clone https://github.com/YOUR_USERNAME/SentiScope-AI.git
+   cd SentiScope-AI
    ```
 
 2. **Create virtual environment**

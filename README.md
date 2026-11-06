@@ -64,8 +64,8 @@ SentiScope AI is a comprehensive sentiment analysis platform that leverages mach
 
 ```bash
 # Clone repository
-git clone https://github.com/shishirkawa/ReviewLens.git
-cd ReviewLens
+git clone https://github.com/shishirkawa/SentiScope-AI.git
+cd SentiScope-AI
 
 # Create virtual environment
 python -m venv .venv
@@ -222,7 +222,7 @@ See LICENSE file for details.
 Questions? Need help?
 
 1. Check documentation above
-2. Open an [issue](https://github.com/shishirkawa/ReviewLens/issues)
+2. Open an [issue](https://github.com/shishirkawa/SentiScope-AI/issues)
 3. Email: shishirkawa14@gmail.com
 
 ---
