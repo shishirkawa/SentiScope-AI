@@ -1,8 +1,7 @@
 """
-SentiScope AI - Advanced Sentiment Analysis Platform
-----------------------------------------------------
-A comprehensive sentiment analysis application with real-time predictions,
-batch processing, sentiment trends, and advanced text analytics.
+SentiScope AI - Sentiment Analysis Platform
+--------------------------------------------
+A clean, functional sentiment analysis application.
 Built by Shishir Kawa
 """
 
@@ -37,127 +36,247 @@ except ImportError:
 # Page Configuration
 # -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="SentiScope AI - Sentiment Analysis",
-    page_icon="🔍",
+    page_title="SentiScope AI",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 # -----------------------------------------------------------------------------
-# Custom Styling
+# Clean, Purposeful Styling - No Slop
 # -----------------------------------------------------------------------------
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    /* Clean foundation */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
     * {
-        font-family: 'Inter', sans-serif;
+        font-family: 'Inter', -apple-system, system-ui, sans-serif;
     }
 
+    /* Neutral, professional background */
     .stApp {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #fafbfc;
     }
 
+    /* Remove default streamlit padding excess */
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        max-width: 1200px;
+    }
+
+    /* Clean header - no gradients, no glow */
     .main-header {
         background: white;
-        padding: 2rem;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        margin-bottom: 2rem;
+        border: 1px solid #e1e4e8;
+        border-radius: 6px;
+        padding: 24px;
+        margin-bottom: 24px;
     }
 
     .main-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0.5rem;
+        font-size: 24px;
+        font-weight: 600;
+        color: #24292e;
+        margin: 0 0 8px 0;
+        letter-spacing: -0.01em;
     }
 
     .main-subtitle {
-        color: #64748b;
-        font-size: 1.1rem;
+        font-size: 14px;
+        color: #586069;
+        margin: 0;
+        line-height: 1.5;
     }
 
+    /* Simple text input */
     .stTextArea textarea {
         background: white !important;
-        border: 2px solid #e2e8f0 !important;
-        border-radius: 8px !important;
-        color: #1e293b !important;
-        font-size: 15px !important;
+        border: 1px solid #d1d5da !important;
+        border-radius: 6px !important;
+        color: #24292e !important;
+        font-size: 14px !important;
         padding: 12px !important;
+        font-family: inherit !important;
     }
 
     .stTextArea textarea:focus {
-        border-color: #667eea !important;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+        border-color: #0366d6 !important;
+        outline: none !important;
+        box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1) !important;
+    }
+
+    /* Clean buttons - no gradients */
+    div[data-testid="stButton"] button {
+        border-radius: 6px !important;
+        font-weight: 500 !important;
+        font-size: 14px !important;
+        padding: 8px 16px !important;
+        transition: all 0.1s ease !important;
+        border: 1px solid transparent !important;
     }
 
     div[data-testid="stButton"] button[kind="primary"] {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        background: #0366d6 !important;
         color: white !important;
-        border: none !important;
-        padding: 0.6rem 1.5rem !important;
-        font-weight: 600 !important;
-        border-radius: 8px !important;
+        border-color: #0366d6 !important;
     }
 
     div[data-testid="stButton"] button[kind="primary"]:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
+        background: #0256c7 !important;
+        border-color: #0256c7 !important;
     }
 
-    .sentiment-card {
+    div[data-testid="stButton"] button:not([kind="primary"]) {
+        background: white !important;
+        color: #24292e !important;
+        border: 1px solid #d1d5da !important;
+    }
+
+    div[data-testid="stButton"] button:not([kind="primary"]):hover {
+        background: #f6f8fa !important;
+        border-color: #c2c7cc !important;
+    }
+
+    /* Result card - clean semantic colors */
+    .result-card {
         background: white;
-        padding: 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        margin: 1rem 0;
+        border: 1px solid #e1e4e8;
+        border-radius: 6px;
+        padding: 16px;
+        margin: 16px 0;
     }
 
-    .sentiment-positive {
-        border-left: 4px solid #10b981;
+    .result-card.positive {
+        border-left: 3px solid #28a745;
     }
 
-    .sentiment-neutral {
-        border-left: 4px solid #f59e0b;
+    .result-card.neutral {
+        border-left: 3px solid #6f42c1;
     }
 
-    .sentiment-negative {
-        border-left: 4px solid #ef4444;
+    .result-card.negative {
+        border-left: 3px solid #d73a49;
     }
 
-    .stat-card {
+    .result-label {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #586069;
+        margin-bottom: 4px;
+    }
+
+    .result-value {
+        font-size: 20px;
+        font-weight: 600;
+        color: #24292e;
+        margin-bottom: 8px;
+    }
+
+    .result-confidence {
+        font-size: 14px;
+        color: #586069;
+    }
+
+    /* Progress bars - simple, no fancy styling */
+    .stProgress > div > div > div {
+        background: #0366d6;
+        height: 8px;
+    }
+
+    /* Metrics - clean cards */
+    div[data-testid="stMetric"] {
         background: white;
-        padding: 1.5rem;
-        border-radius: 10px;
-        text-align: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border: 1px solid #e1e4e8;
+        border-radius: 6px;
+        padding: 16px;
     }
 
-    .stat-value {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #1e293b;
-    }
-
-    .stat-label {
-        color: #64748b;
-        font-size: 0.9rem;
+    div[data-testid="stMetricLabel"] {
+        font-size: 12px;
+        font-weight: 600;
+        color: #586069;
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
 
-    section[data-testid="stSidebar"] {
-        background: rgba(255, 255, 255, 0.95);
+    div[data-testid="stMetricValue"] {
+        font-size: 24px;
+        font-weight: 600;
+        color: #24292e;
     }
 
-    .emoji-indicator {
-        font-size: 3rem;
+    /* Tabs - minimal styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 0;
+        background: transparent;
+        border-bottom: 1px solid #e1e4e8;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        background: transparent;
+        border: none;
+        color: #586069;
+        font-weight: 500;
+        font-size: 14px;
+        padding: 12px 16px;
+    }
+
+    .stTabs [aria-selected="true"] {
+        color: #24292e;
+        border-bottom: 2px solid #0366d6;
+    }
+
+    /* Sidebar - clean and minimal */
+    section[data-testid="stSidebar"] {
+        background: white;
+        border-right: 1px solid #e1e4e8;
+    }
+
+    section[data-testid="stSidebar"] h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: #24292e;
+        margin-bottom: 16px;
+    }
+
+    /* Data tables */
+    div[data-testid="stDataFrame"] {
+        border: 1px solid #e1e4e8;
+        border-radius: 6px;
+    }
+
+    /* Info boxes - subtle */
+    div[data-testid="stAlert"] {
+        border-radius: 6px;
+        border: 1px solid #e1e4e8;
+        background: #f6f8fa;
+    }
+
+    /* Remove excessive spacing */
+    .element-container {
+        margin-bottom: 1rem;
+    }
+
+    /* Clean expander */
+    div[data-testid="stExpander"] {
+        background: white;
+        border: 1px solid #e1e4e8;
+        border-radius: 6px;
+    }
+
+    /* Footer */
+    .footer {
+        margin-top: 48px;
+        padding-top: 24px;
+        border-top: 1px solid #e1e4e8;
         text-align: center;
-        margin: 1rem 0;
+        color: #586069;
+        font-size: 12px;
     }
     </style>
     """,
@@ -171,9 +290,6 @@ STOPWORDS = {
     "a", "an", "the", "is", "it", "this", "that", "i", "you", "he", "she",
     "we", "they", "am", "are", "was", "were", "be", "been", "being", "to",
     "of", "in", "on", "at", "for", "with", "and", "or", "so", "as",
-    "my", "your", "his", "her", "its", "our", "their", "me", "him", "them",
-    "us", "do", "does", "did", "have", "has", "had", "will", "would", "can",
-    "could", "should", "just",
 }
 
 def clean_text(text: str) -> str:
@@ -184,16 +300,7 @@ def clean_text(text: str) -> str:
 def preprocess(text: str) -> str:
     return " ".join(w for w in clean_text(text).split() if w not in STOPWORDS)
 
-def get_sentiment_emoji(sentiment: str) -> str:
-    emojis = {
-        "positive": "😊",
-        "neutral": "😐",
-        "negative": "😞"
-    }
-    return emojis.get(sentiment, "🤔")
-
 def extract_keywords(text: str, top_n: int = 5) -> list:
-    """Extract most important keywords from text"""
     words = clean_text(text).split()
     words = [w for w in words if w not in STOPWORDS and len(w) > 3]
     from collections import Counter
@@ -201,7 +308,6 @@ def extract_keywords(text: str, top_n: int = 5) -> list:
     return [word for word, _ in word_freq.most_common(top_n)]
 
 def get_text_stats(text: str) -> dict:
-    """Calculate text statistics"""
     words = text.split()
     return {
         "word_count": len(words),
@@ -215,39 +321,28 @@ def get_text_stats(text: str) -> dict:
 def generate_default_data():
     subjects = [
         "the product", "this movie", "the restaurant", "the phone", "the laptop",
-        "this book", "the service", "the app", "the hotel room", "the course",
-        "this game", "the headphones", "the software", "the delivery", "the show",
-        "this camera", "the customer support", "the coffee", "this album", "the shoes"
+        "this book", "the service", "the app", "the hotel", "the course"
     ]
     pos = [
-        "I absolutely love {s}, it exceeded all my expectations.",
-        "{s} works perfectly and the quality is outstanding.",
-        "Really impressed with {s}, would highly recommend it to anyone.",
+        "I love {s}, it exceeded expectations.",
+        "{s} works perfectly and quality is outstanding.",
+        "Really impressed with {s}, highly recommend.",
         "{s} is fantastic, worth every penny.",
-        "What a great experience with {s}, everything was smooth and enjoyable.",
-        "{s} made my day, I'm extremely satisfied.",
-        "Excellent! {s} is exactly what I was hoping for.",
-        "I'm so happy with {s}, it's the best I've tried so far.",
-        "{s} is amazing and I will definitely buy/use it again.",
-        "Superb quality, {s} really delivers on its promises.",
+        "Great experience with {s}, very satisfied.",
     ]
     neg = [
-        "I hate {s}, it was a complete waste of money.",
-        "{s} broke down within days, extremely disappointing.",
-        "Terrible experience with {s}, I would not recommend it.",
-        "{s} is awful and nothing like what was advertised.",
-        "Very frustrated with {s}, it simply doesn't work as expected.",
-        "{s} was a huge letdown, poor quality all around.",
-        "I regret buying/using {s}, total disaster.",
-        "{s} is the worst I've ever encountered, avoid at all costs.",
+        "I hate {s}, complete waste of money.",
+        "{s} broke down within days, disappointing.",
+        "Terrible experience with {s}, not recommended.",
+        "{s} is awful, nothing like advertised.",
+        "Very frustrated with {s}, doesn't work.",
     ]
     neu = [
-        "{s} was okay, nothing special but not bad either.",
-        "{s} is average, does the job but could be improved.",
-        "I have mixed feelings about {s}, some parts were good, others not.",
-        "{s} is fine for the price, though there's room for improvement.",
-        "Not sure how I feel about {s}, it was just a typical experience.",
-        "{s} met basic expectations, nothing more, nothing less.",
+        "{s} was okay, nothing special.",
+        "{s} is average, does the job.",
+        "Mixed feelings about {s}.",
+        "{s} is fine for the price.",
+        "Not sure how I feel about {s}.",
     ]
     rows = []
     for s in subjects:
@@ -262,7 +357,7 @@ def generate_default_data():
 # -----------------------------------------------------------------------------
 # Model Loading
 # -----------------------------------------------------------------------------
-@st.cache_resource(show_spinner="Loading AI model...")
+@st.cache_resource(show_spinner="Loading model...")
 def load_assets():
     model_path = os.path.join(MODELS_DIR, "sentiment_model.joblib")
     vectorizer_path = os.path.join(MODELS_DIR, "tfidf_vectorizer.joblib")
@@ -301,7 +396,7 @@ def predict_sentiment(text: str):
     return pred, prob_dict, clean
 
 # -----------------------------------------------------------------------------
-# Session State Management
+# Session State
 # -----------------------------------------------------------------------------
 if "analysis_history" not in st.session_state:
     st.session_state.analysis_history = []
@@ -321,30 +416,30 @@ def save_to_history(text, sentiment, confidence):
 # Sidebar
 # -----------------------------------------------------------------------------
 with st.sidebar:
-    st.markdown("### 🔍 SentiScope AI")
-    st.caption("Advanced Sentiment Analysis Platform")
+    st.markdown("### SentiScope AI")
+    st.caption("Sentiment analysis platform")
 
     st.markdown("---")
 
-    st.markdown("### Quick Test Samples")
+    st.markdown("### Quick Samples")
 
     samples = {
-        "Positive": "This product is absolutely amazing! Best purchase I've made this year.",
-        "Negative": "Terrible quality, broke after one day. Very disappointed with this purchase.",
-        "Neutral": "The item arrived on time and looks as described in the pictures.",
+        "Positive": "This product is amazing. Best purchase I've made this year.",
+        "Negative": "Terrible quality, broke after one day. Very disappointed.",
+        "Neutral": "The item arrived on time and looks as described.",
         "Mixed": "Good quality but quite expensive for what you get.",
     }
 
     for label, text in samples.items():
-        if st.button(f"📝 {label}", use_container_width=True, key=f"sample_{label}"):
+        if st.button(label, use_container_width=True, key=f"sample_{label}"):
             st.session_state.current_input = text
 
     st.markdown("---")
 
-    st.markdown("### 📊 Analysis Statistics")
+    st.markdown("### Statistics")
     if st.session_state.analysis_history:
         total = len(st.session_state.analysis_history)
-        st.metric("Total Analyses", total)
+        st.metric("Total analyses", total)
 
         sentiments = [item["sentiment"] for item in st.session_state.analysis_history]
         pos_count = sentiments.count("positive")
@@ -354,13 +449,10 @@ with st.sidebar:
 
     st.markdown("---")
 
-    st.markdown("### ℹ️ About")
-    st.caption("**Model:** Logistic Regression + TF-IDF")
-    st.caption("**Accuracy:** ~95%")
-    st.caption("**Classes:** Positive, Neutral, Negative")
-
-    st.markdown("---")
-    st.caption("Built with ❤️ by Shishir Kawa")
+    st.markdown("### Model Info")
+    st.caption("Logistic Regression + TF-IDF")
+    st.caption("Accuracy: ~95%")
+    st.caption("Classes: Positive, Neutral, Negative")
 
 # -----------------------------------------------------------------------------
 # Main Header
@@ -368,10 +460,9 @@ with st.sidebar:
 st.markdown(
     """
     <div class="main-header">
-        <div class="main-title">🔍 SentiScope AI</div>
+        <div class="main-title">SentiScope AI</div>
         <div class="main-subtitle">
-            Advanced sentiment analysis powered by machine learning.
-            Analyze text, discover insights, and understand emotions in your content.
+            Analyze sentiment in text using machine learning. Get instant predictions with confidence scores.
         </div>
     </div>
     """,
@@ -382,78 +473,66 @@ st.markdown(
 # Tabs
 # -----------------------------------------------------------------------------
 tab1, tab2, tab3, tab4 = st.tabs([
-    "🎯 Analyze Text",
-    "📊 Batch Processing",
-    "📈 Sentiment Trends",
-    "⚙️ Advanced Tools"
+    "Analyze",
+    "Batch Process",
+    "History",
+    "Tools"
 ])
 
 # -----------------------------------------------------------------------------
-# TAB 1: Analyze Text
+# TAB 1: Analyze
 # -----------------------------------------------------------------------------
 with tab1:
     col1, col2 = st.columns([1.3, 1], gap="large")
 
     with col1:
-        st.markdown("### Enter Your Text")
+        st.markdown("### Input text")
 
         text_input = st.text_area(
-            "Input text",
+            "Text to analyze",
             value=st.session_state.current_input,
             height=200,
-            placeholder="Type or paste your text here to analyze sentiment...",
+            placeholder="Enter text to analyze sentiment...",
             key="main_input",
             label_visibility="collapsed"
         )
 
-        col_btn1, col_btn2, col_btn3 = st.columns([2, 1, 1])
+        col_btn1, col_btn2 = st.columns([3, 1])
         with col_btn1:
-            analyze_btn = st.button("🔍 Analyze Sentiment", type="primary", use_container_width=True)
+            analyze_btn = st.button("Analyze", type="primary", use_container_width=True)
         with col_btn2:
-            if st.button("🗑️ Clear", use_container_width=True):
+            if st.button("Clear", use_container_width=True):
                 st.session_state.current_input = ""
                 st.rerun()
-        with col_btn3:
-            if st.button("📋 Copy", use_container_width=True):
-                st.info("Text copied!")
 
     with col2:
-        st.markdown("### Results")
+        st.markdown("### Result")
 
         if text_input.strip():
             sentiment, probs, cleaned = predict_sentiment(text_input)
             confidence = probs[sentiment] * 100
 
-            # Save to history
             save_to_history(text_input, sentiment, confidence)
 
-            # Display emoji
-            emoji = get_sentiment_emoji(sentiment)
-            st.markdown(f'<div class="emoji-indicator">{emoji}</div>', unsafe_allow_html=True)
-
-            # Display sentiment card
             sentiment_class = f"sentiment-{sentiment}"
             st.markdown(
                 f"""
-                <div class="sentiment-card {sentiment_class}">
-                    <h2 style="text-transform: capitalize; margin:0;">{sentiment}</h2>
-                    <p style="font-size: 1.5rem; font-weight: 600; margin: 0.5rem 0;">
-                        {confidence:.1f}% Confidence
-                    </p>
+                <div class="result-card {sentiment}">
+                    <div class="result-label">Sentiment</div>
+                    <div class="result-value">{sentiment.capitalize()}</div>
+                    <div class="result-confidence">{confidence:.1f}% confidence</div>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
 
-            # Confidence breakdown
-            st.markdown("#### Confidence Distribution")
+            st.markdown("#### Confidence breakdown")
             for sent in ["positive", "neutral", "negative"]:
                 prob_val = probs[sent]
                 st.write(f"**{sent.capitalize()}:** {prob_val*100:.1f}%")
                 st.progress(prob_val)
 
-            # Text statistics
-            with st.expander("📊 Text Statistics"):
+            with st.expander("Text details"):
                 stats = get_text_stats(text_input)
                 col_a, col_b, col_c = st.columns(3)
                 col_a.metric("Words", stats["word_count"])
@@ -462,27 +541,27 @@ with tab1:
 
                 keywords = extract_keywords(text_input)
                 if keywords:
-                    st.write("**Key Terms:**", ", ".join(keywords))
+                    st.write("**Keywords:**", ", ".join(keywords))
         else:
-            st.info("👈 Enter text to analyze sentiment")
+            st.info("Enter text to analyze")
 
 # -----------------------------------------------------------------------------
-# TAB 2: Batch Processing
+# TAB 2: Batch Process
 # -----------------------------------------------------------------------------
 with tab2:
-    st.markdown("### Batch Sentiment Analysis")
-    st.write("Upload a CSV file to analyze multiple texts at once")
+    st.markdown("### Batch analysis")
+    st.write("Upload CSV file to analyze multiple texts")
 
     uploaded_file = st.file_uploader(
         "Choose CSV file",
         type=["csv"],
-        help="Upload a CSV with a text column"
+        help="Upload CSV with text column"
     )
 
     if uploaded_file:
         try:
             df = pd.read_csv(uploaded_file)
-            st.success(f"✅ Loaded {len(df):,} rows")
+            st.success(f"Loaded {len(df):,} rows")
 
             text_cols = [col for col in df.columns if df[col].dtype == "object"]
             if not text_cols:
@@ -494,10 +573,10 @@ with tab2:
             with col2:
                 st.write("")
                 st.write("")
-                process_btn = st.button("🚀 Analyze All", type="primary", use_container_width=True)
+                process_btn = st.button("Process", type="primary", use_container_width=True)
 
             if process_btn:
-                with st.spinner("Analyzing..."):
+                with st.spinner("Processing..."):
                     results = []
                     progress = st.progress(0)
 
@@ -521,51 +600,50 @@ with tab2:
             if "batch_results" in st.session_state:
                 res = st.session_state.batch_results
 
-                st.markdown("### 📊 Results Summary")
+                st.markdown("### Results")
 
                 col1, col2, col3, col4 = st.columns(4)
                 counts = res["sentiment"].value_counts().to_dict()
                 total = len(res)
 
-                col1.markdown(f'<div class="stat-card"><div class="stat-value">{total:,}</div><div class="stat-label">Total</div></div>', unsafe_allow_html=True)
-                col2.markdown(f'<div class="stat-card"><div class="stat-value">{counts.get("positive", 0):,}</div><div class="stat-label">Positive</div></div>', unsafe_allow_html=True)
-                col3.markdown(f'<div class="stat-card"><div class="stat-value">{counts.get("neutral", 0):,}</div><div class="stat-label">Neutral</div></div>', unsafe_allow_html=True)
-                col4.markdown(f'<div class="stat-card"><div class="stat-value">{counts.get("negative", 0):,}</div><div class="stat-label">Negative</div></div>', unsafe_allow_html=True)
+                col1.metric("Total", f"{total:,}")
+                col2.metric("Positive", f"{counts.get('positive', 0):,}")
+                col3.metric("Neutral", f"{counts.get('neutral', 0):,}")
+                col4.metric("Negative", f"{counts.get('negative', 0):,}")
 
                 st.markdown("### Distribution")
                 st.bar_chart(res["sentiment"].value_counts())
 
-                st.markdown("### Data Preview")
+                st.markdown("### Data preview")
                 st.dataframe(res.head(100), use_container_width=True)
 
-                # Export options
                 col1, col2, col3 = st.columns(3)
                 with col1:
                     csv = res.to_csv(index=False)
                     st.download_button(
-                        "📥 Download CSV",
+                        "Download CSV",
                         csv,
-                        "sentiment_results.csv",
+                        "results.csv",
                         "text/csv",
                         use_container_width=True
                     )
                 with col2:
                     json_str = res.to_json(orient="records", indent=2)
                     st.download_button(
-                        "📥 Download JSON",
+                        "Download JSON",
                         json_str,
-                        "sentiment_results.json",
+                        "results.json",
                         "application/json",
                         use_container_width=True
                     )
                 with col3:
                     excel_buffer = io.BytesIO()
                     with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
-                        res.to_excel(writer, index=False, sheet_name='Sentiment Analysis')
+                        res.to_excel(writer, index=False, sheet_name='Results')
                     st.download_button(
-                        "📥 Download Excel",
+                        "Download Excel",
                         excel_buffer.getvalue(),
-                        "sentiment_results.xlsx",
+                        "results.xlsx",
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                         use_container_width=True
                     )
@@ -573,13 +651,13 @@ with tab2:
         except Exception as e:
             st.error(f"Error: {str(e)}")
     else:
-        st.info("📤 Upload a CSV file to get started")
+        st.info("Upload CSV file to begin")
 
 # -----------------------------------------------------------------------------
-# TAB 3: Sentiment Trends
+# TAB 3: History
 # -----------------------------------------------------------------------------
 with tab3:
-    st.markdown("### 📈 Analysis History & Trends")
+    st.markdown("### Analysis history")
 
     if st.session_state.analysis_history:
         history_df = pd.DataFrame(st.session_state.analysis_history)
@@ -587,70 +665,64 @@ with tab3:
         col1, col2 = st.columns(2)
 
         with col1:
-            st.markdown("#### Sentiment Distribution")
+            st.markdown("#### Distribution")
             sentiment_counts = history_df["sentiment"].value_counts()
             st.bar_chart(sentiment_counts)
 
         with col2:
-            st.markdown("#### Average Confidence by Sentiment")
+            st.markdown("#### Average confidence")
             avg_conf = history_df.groupby("sentiment")["confidence"].mean()
             st.bar_chart(avg_conf)
 
-        st.markdown("#### Recent Analyses")
+        st.markdown("#### Recent analyses")
         st.dataframe(
             history_df[["timestamp", "text", "sentiment", "confidence"]].tail(20),
             use_container_width=True
         )
 
-        if st.button("🗑️ Clear History"):
+        if st.button("Clear history"):
             st.session_state.analysis_history = []
             st.rerun()
     else:
-        st.info("No analysis history yet. Start analyzing text to see trends!")
+        st.info("No history yet. Analyze text to see trends.")
 
 # -----------------------------------------------------------------------------
-# TAB 4: Advanced Tools
+# TAB 4: Tools
 # -----------------------------------------------------------------------------
 with tab4:
-    st.markdown("### ⚙️ Advanced Analysis Tools")
+    st.markdown("### Compare texts")
 
-    st.markdown("#### 🔄 Compare Multiple Texts")
+    text1 = st.text_area("Text 1", height=100, placeholder="First text...")
+    text2 = st.text_area("Text 2", height=100, placeholder="Second text...")
 
-    text1 = st.text_area("Text 1", height=100, placeholder="Enter first text...")
-    text2 = st.text_area("Text 2", height=100, placeholder="Enter second text...")
-
-    if st.button("Compare Sentiments", type="primary"):
+    if st.button("Compare", type="primary"):
         if text1.strip() and text2.strip():
             col1, col2 = st.columns(2)
 
             with col1:
-                st.markdown("**Text 1 Analysis**")
+                st.markdown("**Text 1**")
                 sent1, probs1, _ = predict_sentiment(text1)
-                emoji1 = get_sentiment_emoji(sent1)
-                st.markdown(f"# {emoji1}")
-                st.write(f"**Sentiment:** {sent1.capitalize()}")
-                st.write(f"**Confidence:** {probs1[sent1]*100:.1f}%")
+                st.write(f"Sentiment: {sent1.capitalize()}")
+                st.write(f"Confidence: {probs1[sent1]*100:.1f}%")
 
             with col2:
-                st.markdown("**Text 2 Analysis**")
+                st.markdown("**Text 2**")
                 sent2, probs2, _ = predict_sentiment(text2)
-                emoji2 = get_sentiment_emoji(sent2)
-                st.markdown(f"# {emoji2}")
-                st.write(f"**Sentiment:** {sent2.capitalize()}")
-                st.write(f"**Confidence:** {probs2[sent2]*100:.1f}%")
+                st.write(f"Sentiment: {sent2.capitalize()}")
+                st.write(f"Confidence: {probs2[sent2]*100:.1f}%")
 
             if sent1 == sent2:
-                st.success("✅ Both texts have the same sentiment!")
+                st.success("Same sentiment")
             else:
-                st.warning(f"⚠️ Sentiments differ: {sent1} vs {sent2}")
+                st.warning(f"Different: {sent1} vs {sent2}")
         else:
-            st.error("Please enter both texts")
+            st.error("Enter both texts")
 
     st.markdown("---")
 
-    st.markdown("#### 📝 Text Preprocessing Options")
+    st.markdown("### Text preprocessing")
 
-    test_text = st.text_area("Test Text", "This is a SAMPLE text with STOPWORDS!")
+    test_text = st.text_area("Test text", "This is sample text with STOPWORDS!")
 
     col1, col2 = st.columns(2)
     with col1:
@@ -659,23 +731,21 @@ with tab4:
             st.code(processed)
 
     with col2:
-        if st.checkbox("Show cleaned text"):
+        if st.checkbox("Clean text"):
             cleaned = clean_text(test_text)
             st.code(cleaned)
 
     if st.checkbox("Extract keywords"):
         keywords = extract_keywords(test_text)
-        st.write("**Keywords:**", ", ".join(keywords) if keywords else "None found")
+        st.write("**Keywords:**", ", ".join(keywords) if keywords else "None")
 
 # -----------------------------------------------------------------------------
 # Footer
 # -----------------------------------------------------------------------------
-st.markdown("---")
 st.markdown(
     """
-    <div style="text-align: center; color: white; padding: 1rem;">
-        <p><strong>SentiScope AI</strong> - Advanced Sentiment Analysis Platform</p>
-        <p>Developed by Shishir Kawa | Powered by Machine Learning</p>
+    <div class="footer">
+        SentiScope AI – Built by Shishir Kawa
     </div>
     """,
     unsafe_allow_html=True
