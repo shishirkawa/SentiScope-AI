@@ -43,7 +43,7 @@ st.set_page_config(
 )
 
 # -----------------------------------------------------------------------------
-# Clean, Purposeful Styling - No Slop
+# Clean Dark Theme - Professional & Readable
 # -----------------------------------------------------------------------------
 st.markdown(
     """
@@ -55,9 +55,9 @@ st.markdown(
         font-family: 'Inter', -apple-system, system-ui, sans-serif;
     }
 
-    /* Neutral, professional background */
+    /* Dark professional background */
     .stApp {
-        background: #fafbfc;
+        background: #0d1117;
     }
 
     /* Remove default streamlit padding excess */
@@ -67,10 +67,10 @@ st.markdown(
         max-width: 1200px;
     }
 
-    /* Clean header - no gradients, no glow */
+    /* Clean header - dark with white text */
     .main-header {
-        background: white;
-        border: 1px solid #e1e4e8;
+        background: #161b22;
+        border: 1px solid #30363d;
         border-radius: 6px;
         padding: 24px;
         margin-bottom: 24px;
@@ -79,36 +79,40 @@ st.markdown(
     .main-title {
         font-size: 24px;
         font-weight: 600;
-        color: #24292e;
+        color: #ffffff;
         margin: 0 0 8px 0;
         letter-spacing: -0.01em;
     }
 
     .main-subtitle {
         font-size: 14px;
-        color: #586069;
+        color: #8b949e;
         margin: 0;
         line-height: 1.5;
     }
 
-    /* Simple text input */
+    /* Simple text input - dark with white text */
     .stTextArea textarea {
-        background: white !important;
-        border: 1px solid #d1d5da !important;
+        background: #0d1117 !important;
+        border: 1px solid #30363d !important;
         border-radius: 6px !important;
-        color: #24292e !important;
+        color: #ffffff !important;
         font-size: 14px !important;
         padding: 12px !important;
         font-family: inherit !important;
     }
 
     .stTextArea textarea:focus {
-        border-color: #0366d6 !important;
+        border-color: #58a6ff !important;
         outline: none !important;
-        box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1) !important;
+        box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1) !important;
     }
 
-    /* Clean buttons - no gradients */
+    .stTextArea textarea::placeholder {
+        color: #6e7681 !important;
+    }
+
+    /* Clean buttons - dark theme */
     div[data-testid="stButton"] button {
         border-radius: 6px !important;
         font-weight: 500 !important;
@@ -119,46 +123,46 @@ st.markdown(
     }
 
     div[data-testid="stButton"] button[kind="primary"] {
-        background: #0366d6 !important;
-        color: white !important;
-        border-color: #0366d6 !important;
+        background: #ffffff !important;
+        color: #0d1117 !important;
+        border-color: #ffffff !important;
     }
 
     div[data-testid="stButton"] button[kind="primary"]:hover {
-        background: #0256c7 !important;
-        border-color: #0256c7 !important;
+        background: #f0f0f0 !important;
+        border-color: #f0f0f0 !important;
     }
 
     div[data-testid="stButton"] button:not([kind="primary"]) {
-        background: white !important;
-        color: #24292e !important;
-        border: 1px solid #d1d5da !important;
+        background: #21262d !important;
+        color: #c9d1d9 !important;
+        border: 1px solid #30363d !important;
     }
 
     div[data-testid="stButton"] button:not([kind="primary"]):hover {
-        background: #f6f8fa !important;
-        border-color: #c2c7cc !important;
+        background: #30363d !important;
+        border-color: #8b949e !important;
     }
 
-    /* Result card - clean semantic colors */
+    /* Result card - dark with clean colors */
     .result-card {
-        background: white;
-        border: 1px solid #e1e4e8;
+        background: #161b22;
+        border: 1px solid #30363d;
         border-radius: 6px;
         padding: 16px;
         margin: 16px 0;
     }
 
     .result-card.positive {
-        border-left: 3px solid #28a745;
+        border-left: 3px solid #3fb950;
     }
 
     .result-card.neutral {
-        border-left: 3px solid #6f42c1;
+        border-left: 3px solid #a371f7;
     }
 
     .result-card.negative {
-        border-left: 3px solid #d73a49;
+        border-left: 3px solid #f85149;
     }
 
     .result-label {
@@ -166,32 +170,32 @@ st.markdown(
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        color: #586069;
+        color: #8b949e;
         margin-bottom: 4px;
     }
 
     .result-value {
         font-size: 20px;
         font-weight: 600;
-        color: #24292e;
+        color: #ffffff;
         margin-bottom: 8px;
     }
 
     .result-confidence {
         font-size: 14px;
-        color: #586069;
+        color: #8b949e;
     }
 
-    /* Progress bars - simple, no fancy styling */
+    /* Progress bars - white accent */
     .stProgress > div > div > div {
-        background: #0366d6;
+        background: #ffffff;
         height: 8px;
     }
 
-    /* Metrics - clean cards */
+    /* Metrics - dark cards with white text */
     div[data-testid="stMetric"] {
-        background: white;
-        border: 1px solid #e1e4e8;
+        background: #161b22;
+        border: 1px solid #30363d;
         border-radius: 6px;
         padding: 16px;
     }
@@ -199,7 +203,7 @@ st.markdown(
     div[data-testid="stMetricLabel"] {
         font-size: 12px;
         font-weight: 600;
-        color: #586069;
+        color: #8b949e;
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
@@ -207,54 +211,67 @@ st.markdown(
     div[data-testid="stMetricValue"] {
         font-size: 24px;
         font-weight: 600;
-        color: #24292e;
+        color: #ffffff;
     }
 
-    /* Tabs - minimal styling */
+    /* Tabs - minimal dark styling */
     .stTabs [data-baseweb="tab-list"] {
         gap: 0;
         background: transparent;
-        border-bottom: 1px solid #e1e4e8;
+        border-bottom: 1px solid #21262d;
     }
 
     .stTabs [data-baseweb="tab"] {
         background: transparent;
         border: none;
-        color: #586069;
+        color: #8b949e;
         font-weight: 500;
         font-size: 14px;
         padding: 12px 16px;
     }
 
-    .stTabs [aria-selected="true"] {
-        color: #24292e;
-        border-bottom: 2px solid #0366d6;
+    .stTabs [data-baseweb="tab"]:hover {
+        color: #c9d1d9;
     }
 
-    /* Sidebar - clean and minimal */
+    .stTabs [aria-selected="true"] {
+        color: #ffffff;
+        border-bottom: 2px solid #ffffff;
+    }
+
+    /* Sidebar - dark and minimal */
     section[data-testid="stSidebar"] {
-        background: white;
-        border-right: 1px solid #e1e4e8;
+        background: #0d1117;
+        border-right: 1px solid #21262d;
     }
 
     section[data-testid="stSidebar"] h3 {
         font-size: 14px;
         font-weight: 600;
-        color: #24292e;
+        color: #ffffff;
         margin-bottom: 16px;
     }
 
-    /* Data tables */
+    section[data-testid="stSidebar"] .stMarkdown {
+        color: #8b949e;
+    }
+
+    section[data-testid="stSidebar"] hr {
+        border-color: #21262d;
+    }
+
+    /* Data tables - dark theme */
     div[data-testid="stDataFrame"] {
-        border: 1px solid #e1e4e8;
+        border: 1px solid #30363d;
         border-radius: 6px;
     }
 
-    /* Info boxes - subtle */
+    /* Info boxes - dark subtle */
     div[data-testid="stAlert"] {
         border-radius: 6px;
-        border: 1px solid #e1e4e8;
-        background: #f6f8fa;
+        border: 1px solid #30363d;
+        background: #161b22;
+        color: #c9d1d9;
     }
 
     /* Remove excessive spacing */
@@ -262,21 +279,73 @@ st.markdown(
         margin-bottom: 1rem;
     }
 
-    /* Clean expander */
+    /* Clean expander - dark */
     div[data-testid="stExpander"] {
-        background: white;
-        border: 1px solid #e1e4e8;
+        background: #161b22;
+        border: 1px solid #30363d;
         border-radius: 6px;
     }
 
-    /* Footer */
+    div[data-testid="stExpander"] summary {
+        color: #c9d1d9;
+    }
+
+    /* File uploader - dark */
+    div[data-testid="stFileUploader"] {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+    }
+
+    /* Select box - dark */
+    div[data-baseweb="select"] > div {
+        background-color: #0d1117 !important;
+        border-color: #30363d !important;
+        color: #ffffff !important;
+    }
+
+    /* All text should be readable */
+    .stMarkdown, p, span, div {
+        color: #c9d1d9;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: #ffffff;
+    }
+
+    /* Footer - dark */
     .footer {
         margin-top: 48px;
         padding-top: 24px;
-        border-top: 1px solid #e1e4e8;
+        border-top: 1px solid #21262d;
         text-align: center;
-        color: #586069;
+        color: #8b949e;
         font-size: 12px;
+    }
+
+    /* Success/Error/Warning messages - dark theme */
+    .stSuccess {
+        background-color: #161b22 !important;
+        border-color: #3fb950 !important;
+        color: #c9d1d9 !important;
+    }
+
+    .stError {
+        background-color: #161b22 !important;
+        border-color: #f85149 !important;
+        color: #c9d1d9 !important;
+    }
+
+    .stWarning {
+        background-color: #161b22 !important;
+        border-color: #d29922 !important;
+        color: #c9d1d9 !important;
+    }
+
+    .stInfo {
+        background-color: #161b22 !important;
+        border-color: #58a6ff !important;
+        color: #c9d1d9 !important;
     }
     </style>
     """,
