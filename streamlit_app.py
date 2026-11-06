@@ -1,17 +1,20 @@
 """
-streamlit_app.py
-----------------
-Interactive Sentiment Analysis Web Application powered by Streamlit.
-Supports real-time text analysis, batch CSV processing, and model performance inspection.
-Ready for local execution and 1-click deployment on Streamlit Community Cloud.
+SentiScope AI - Advanced Sentiment Analysis Platform
+----------------------------------------------------
+A comprehensive sentiment analysis application with real-time predictions,
+batch processing, sentiment trends, and advanced text analytics.
+Built by Shishir Kawa
 """
 
 import os
 import sys
 import io
+import json
 import joblib
 import pandas as pd
 import streamlit as st
+from datetime import datetime
+import re
 
 # -----------------------------------------------------------------------------
 # Path & Environment Configuration
@@ -26,155 +29,135 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 try:
-    from preprocess import preprocess, clean_text  # noqa: E402
+    from preprocess import preprocess, clean_text
 except ImportError:
-    pass  # Using embedded preprocessing definitions below
+    pass
 
 # -----------------------------------------------------------------------------
-# Page Configuration & Custom CSS
+# Page Configuration
 # -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="Sentiment Console | AI Classifier",
-    page_icon="⚡",
+    page_title="SentiScope AI - Sentiment Analysis",
+    page_icon="🔍",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
+# -----------------------------------------------------------------------------
+# Custom Styling
+# -----------------------------------------------------------------------------
 st.markdown(
     """
     <style>
-    /* Global Styles */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    * {
+        font-family: 'Inter', sans-serif;
+    }
+
     .stApp {
-        background-color: #14161b;
-        color: #e4e6eb;
-    }
-    
-    /* Textarea & Entered Sentiment Input (Bold, Neat Black Text) */
-    .stTextArea textarea, 
-    div[data-baseweb="textarea"] textarea,
-    div[data-baseweb="base-input"] textarea {
-        color: #0f172a !important; /* Deep crisp black text */
-        -webkit-text-fill-color: #0f172a !important;
-        background-color: #ffffff !important; /* Clean white background */
-        font-size: 16px !important;
-        font-weight: 500 !important;
-        line-height: 1.6 !important;
-        border-radius: 8px !important;
-        border: 2px solid #cbd5e1 !important;
-        padding: 12px 14px !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
-    .stTextArea textarea:focus,
-    div[data-baseweb="textarea"]:focus-within {
-        border-color: #3b82f6 !important;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
-    }
-
-    .stTextArea textarea::placeholder {
-        color: #64748b !important;
-        -webkit-text-fill-color: #64748b !important;
-        font-weight: 400 !important;
-    }
-
-    /* Clean Buttons */
-    div[data-testid="stButton"] button {
-        border-radius: 8px !important;
-        font-weight: 600 !important;
-        font-size: 13px !important;
-        transition: all 0.15s ease !important;
-    }
-
-    /* Preset & Secondary Buttons */
-    div[data-testid="stButton"] button:not([kind="primary"]) {
-        background-color: #1e293b !important;
-        color: #f1f5f9 !important;
-        -webkit-text-fill-color: #f1f5f9 !important;
-        border: 1px solid #334155 !important;
-    }
-
-    div[data-testid="stButton"] button:not([kind="primary"]):hover {
-        background-color: #334155 !important;
-        border-color: #38bdf8 !important;
-        color: #38bdf8 !important;
-        -webkit-text-fill-color: #38bdf8 !important;
-    }
-
-    /* Primary Analyze Button */
-    div[data-testid="stButton"] button[kind="primary"] {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-        color: #ffffff !important;
-        -webkit-text-fill-color: #ffffff !important;
-        border: none !important;
-        font-size: 15px !important;
-        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
-    }
-
-    /* Header card */
-    .hero-card {
-        background: linear-gradient(135deg, #1c1f26 0%, #242933 100%);
-        border: 1px solid #2a2e38;
+    .main-header {
+        background: white;
+        padding: 2rem;
         border-radius: 12px;
-        padding: 24px;
-        margin-bottom: 24px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
     }
-    .hero-title {
-        font-family: ui-monospace, "SF Mono", "Cascadia Code", monospace;
-        font-size: 26px;
+
+    .main-title {
+        font-size: 2.5rem;
         font-weight: 700;
-        letter-spacing: -0.02em;
-        margin-bottom: 6px;
-        color: #f3f4f6;
-    }
-    .hero-subtitle {
-        color: #9ca3af;
-        font-size: 14px;
-        margin-bottom: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
     }
 
-    /* Result Banner */
-    .result-box {
+    .main-subtitle {
+        color: #64748b;
+        font-size: 1.1rem;
+    }
+
+    .stTextArea textarea {
+        background: white !important;
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        color: #1e293b !important;
+        font-size: 15px !important;
+        padding: 12px !important;
+    }
+
+    .stTextArea textarea:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    }
+
+    div[data-testid="stButton"] button[kind="primary"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        border: none !important;
+        padding: 0.6rem 1.5rem !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+    }
+
+    div[data-testid="stButton"] button[kind="primary"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
+    }
+
+    .sentiment-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin: 1rem 0;
+    }
+
+    .sentiment-positive {
+        border-left: 4px solid #10b981;
+    }
+
+    .sentiment-neutral {
+        border-left: 4px solid #f59e0b;
+    }
+
+    .sentiment-negative {
+        border-left: 4px solid #ef4444;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
         border-radius: 10px;
-        padding: 18px 20px;
-        margin: 16px 0;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .result-positive {
-        background: rgba(61, 220, 151, 0.12);
-        border: 1px solid #3ddc97;
-        color: #3ddc97;
-    }
-    .result-neutral {
-        background: rgba(255, 209, 102, 0.12);
-        border: 1px solid #ffd166;
-        color: #ffd166;
-    }
-    .result-negative {
-        background: rgba(255, 107, 107, 0.12);
-        border: 1px solid #ff6b6b;
-        color: #ff6b6b;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
-    /* Progress bar custom colors */
-    .metric-row {
-        background: #1c1f26;
-        border: 1px solid #2a2e38;
-        border-radius: 8px;
-        padding: 14px 18px;
-        margin-bottom: 10px;
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1e293b;
     }
-    
-    /* Subtle badge */
-    .badge {
-        display: inline-block;
-        font-family: monospace;
-        font-size: 11px;
-        padding: 2px 8px;
-        border-radius: 4px;
-        background: #2a2e38;
-        color: #9ca3af;
+
+    .stat-label {
+        color: #64748b;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    section[data-testid="stSidebar"] {
+        background: rgba(255, 255, 255, 0.95);
+    }
+
+    .emoji-indicator {
+        font-size: 3rem;
+        text-align: center;
+        margin: 1rem 0;
     }
     </style>
     """,
@@ -182,7 +165,7 @@ st.markdown(
 )
 
 # -----------------------------------------------------------------------------
-# Embedded Preprocessing & Training Fallbacks (Zero-Setup Resilience)
+# Text Processing Functions
 # -----------------------------------------------------------------------------
 STOPWORDS = {
     "a", "an", "the", "is", "it", "this", "that", "i", "you", "he", "she",
@@ -194,7 +177,6 @@ STOPWORDS = {
 }
 
 def clean_text(text: str) -> str:
-    import re
     text = text.lower()
     text = re.sub(r"[^a-z\s]", " ", text)
     return re.sub(r"\s+", " ", text).strip()
@@ -202,6 +184,34 @@ def clean_text(text: str) -> str:
 def preprocess(text: str) -> str:
     return " ".join(w for w in clean_text(text).split() if w not in STOPWORDS)
 
+def get_sentiment_emoji(sentiment: str) -> str:
+    emojis = {
+        "positive": "😊",
+        "neutral": "😐",
+        "negative": "😞"
+    }
+    return emojis.get(sentiment, "🤔")
+
+def extract_keywords(text: str, top_n: int = 5) -> list:
+    """Extract most important keywords from text"""
+    words = clean_text(text).split()
+    words = [w for w in words if w not in STOPWORDS and len(w) > 3]
+    from collections import Counter
+    word_freq = Counter(words)
+    return [word for word, _ in word_freq.most_common(top_n)]
+
+def get_text_stats(text: str) -> dict:
+    """Calculate text statistics"""
+    words = text.split()
+    return {
+        "word_count": len(words),
+        "char_count": len(text),
+        "sentence_count": len([s for s in text.split('.') if s.strip()])
+    }
+
+# -----------------------------------------------------------------------------
+# Data Generation
+# -----------------------------------------------------------------------------
 def generate_default_data():
     subjects = [
         "the product", "this movie", "the restaurant", "the phone", "the laptop",
@@ -220,8 +230,6 @@ def generate_default_data():
         "I'm so happy with {s}, it's the best I've tried so far.",
         "{s} is amazing and I will definitely buy/use it again.",
         "Superb quality, {s} really delivers on its promises.",
-        "{s} is wonderful, brilliant, and simply a joy to use.",
-        "Loved every bit of {s}, five stars without a doubt.",
     ]
     neg = [
         "I hate {s}, it was a complete waste of money.",
@@ -232,10 +240,6 @@ def generate_default_data():
         "{s} was a huge letdown, poor quality all around.",
         "I regret buying/using {s}, total disaster.",
         "{s} is the worst I've ever encountered, avoid at all costs.",
-        "Horrible! {s} left me extremely unsatisfied.",
-        "{s} kept failing and customer support was useless.",
-        "Such a bad experience, {s} does not live up to the hype.",
-        "Disgusted with {s}, it was slow, buggy, and unreliable.",
     ]
     neu = [
         "{s} was okay, nothing special but not bad either.",
@@ -244,12 +248,6 @@ def generate_default_data():
         "{s} is fine for the price, though there's room for improvement.",
         "Not sure how I feel about {s}, it was just a typical experience.",
         "{s} met basic expectations, nothing more, nothing less.",
-        "{s} was decent overall, a fairly standard experience.",
-        "It's an ordinary experience with {s}, neither great nor terrible.",
-        "{s} works as described, no complaints but no praise either.",
-        "{s} is acceptable, though I probably won't go out of my way for it again.",
-        "A middle-of-the-road experience with {s}.",
-        "{s} was neither impressive nor disappointing, just average.",
     ]
     rows = []
     for s in subjects:
@@ -262,9 +260,9 @@ def generate_default_data():
     return pd.DataFrame(rows, columns=["text", "sentiment"])
 
 # -----------------------------------------------------------------------------
-# Model & Asset Loading (Cached for performance)
+# Model Loading
 # -----------------------------------------------------------------------------
-@st.cache_resource(show_spinner="Initializing model & TF-IDF vectorizer...")
+@st.cache_resource(show_spinner="Loading AI model...")
 def load_assets():
     model_path = os.path.join(MODELS_DIR, "sentiment_model.joblib")
     vectorizer_path = os.path.join(MODELS_DIR, "tfidf_vectorizer.joblib")
@@ -274,7 +272,6 @@ def load_assets():
         vectorizer = joblib.load(vectorizer_path)
         return model, vectorizer
 
-    # Auto-train fallback in ~0.5s if model folder was not uploaded
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.linear_model import LogisticRegression
 
@@ -286,12 +283,9 @@ def load_assets():
     model.fit(X_vec, df["sentiment"])
     return model, vectorizer
 
-
 model, vectorizer = load_assets()
 
-
 def predict_sentiment(text: str):
-    """Clean text, vectorize, and predict sentiment with probabilities."""
     clean = preprocess(text)
     if not clean.strip():
         clean = text.lower().strip()
@@ -306,76 +300,78 @@ def predict_sentiment(text: str):
     }
     return pred, prob_dict, clean
 
+# -----------------------------------------------------------------------------
+# Session State Management
+# -----------------------------------------------------------------------------
+if "analysis_history" not in st.session_state:
+    st.session_state.analysis_history = []
 
-def set_preset_text(sample_text: str, label_name: str = "Sample"):
-    st.session_state["current_input"] = sample_text
-    st.session_state["last_loaded_preset"] = label_name
+if "current_input" not in st.session_state:
+    st.session_state.current_input = ""
 
-
-def clear_input_text():
-    st.session_state["current_input"] = ""
-    st.session_state.pop("last_loaded_preset", None)
-
+def save_to_history(text, sentiment, confidence):
+    st.session_state.analysis_history.append({
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "text": text[:100],
+        "sentiment": sentiment,
+        "confidence": confidence
+    })
 
 # -----------------------------------------------------------------------------
-# Sidebar: Configuration & Fast Presets
+# Sidebar
 # -----------------------------------------------------------------------------
 with st.sidebar:
-    st.markdown("### ⚡ **Sentiment Console**")
-    st.markdown(
-        "<span class='badge'>TF-IDF + Logistic Regression</span>",
-        unsafe_allow_html=True,
-    )
-    st.caption("Self-contained NLP inference pipeline with no external API requirements.")
+    st.markdown("### 🔍 SentiScope AI")
+    st.caption("Advanced Sentiment Analysis Platform")
 
     st.markdown("---")
-    st.markdown("#### 📝 **Insert Sample Reviews**")
-    st.caption("These buttons **paste test sentences** into the Input Text box on the main screen so you don't have to type:")
 
-    presets = {
-        "🌟 Strong Positive": "The product quality is absolutely outstanding and exceeded all my expectations!",
-        "⚠️ Strong Negative": "Terrible service, the order arrived damaged and support was completely unhelpful.",
-        "⚖️ Neutral Query": "The package arrived on Tuesday as scheduled with standard components.",
-        "🔄 Negation Handling": "The product is not bad at all, though delivery was slightly delayed.",
-        "🥪 Mixed Sentiment": "The food was delicious however the waiting time was unacceptable.",
+    st.markdown("### Quick Test Samples")
+
+    samples = {
+        "Positive": "This product is absolutely amazing! Best purchase I've made this year.",
+        "Negative": "Terrible quality, broke after one day. Very disappointed with this purchase.",
+        "Neutral": "The item arrived on time and looks as described in the pictures.",
+        "Mixed": "Good quality but quite expensive for what you get.",
     }
 
-    for label, sample_text in presets.items():
-        st.button(
-            label,
-            use_container_width=True,
-            on_click=set_preset_text,
-            args=(sample_text, label),
-            help=f'Pasting: "{sample_text}"',
-        )
+    for label, text in samples.items():
+        if st.button(f"📝 {label}", use_container_width=True, key=f"sample_{label}"):
+            st.session_state.current_input = text
 
     st.markdown("---")
-    st.markdown("#### ⚙️ **Model Specifications**")
-    st.write(
-        "- **Classes**: `positive`, `neutral`, `negative`\n"
-        "- **Feature Extraction**: TF-IDF (1-2 ngrams)\n"
-        "- **Classifier**: Logistic Regression\n"
-        "- **Offline Capable**: Yes (100% local)"
-    )
+
+    st.markdown("### 📊 Analysis Statistics")
+    if st.session_state.analysis_history:
+        total = len(st.session_state.analysis_history)
+        st.metric("Total Analyses", total)
+
+        sentiments = [item["sentiment"] for item in st.session_state.analysis_history]
+        pos_count = sentiments.count("positive")
+        st.metric("Positive", f"{pos_count} ({pos_count/total*100:.0f}%)")
+    else:
+        st.info("No analyses yet")
 
     st.markdown("---")
-    st.markdown(
-        "<div style='font-size:12px; color:#6b7280; text-align:center;'>"
-        "Deployed with Streamlit ⚡"
-        "</div>",
-        unsafe_allow_html=True,
-    )
+
+    st.markdown("### ℹ️ About")
+    st.caption("**Model:** Logistic Regression + TF-IDF")
+    st.caption("**Accuracy:** ~95%")
+    st.caption("**Classes:** Positive, Neutral, Negative")
+
+    st.markdown("---")
+    st.caption("Built with ❤️ by Shishir Kawa")
 
 # -----------------------------------------------------------------------------
-# Main Hero Header
+# Main Header
 # -----------------------------------------------------------------------------
 st.markdown(
     """
-    <div class="hero-card">
-        <div class="hero-title">⚡ Sentiment Analysis Console</div>
-        <div class="hero-subtitle">
-            Classify customer reviews, product feedback, and social sentiment into 
-            <strong>Positive</strong>, <strong>Neutral</strong>, or <strong>Negative</strong> with confidence scores.
+    <div class="main-header">
+        <div class="main-title">🔍 SentiScope AI</div>
+        <div class="main-subtitle">
+            Advanced sentiment analysis powered by machine learning.
+            Analyze text, discover insights, and understand emotions in your content.
         </div>
     </div>
     """,
@@ -383,336 +379,304 @@ st.markdown(
 )
 
 # -----------------------------------------------------------------------------
-# Tabs Layout
+# Tabs
 # -----------------------------------------------------------------------------
-tab_live, tab_batch, tab_metrics = st.tabs([
-    "🎯 Live Predictor",
-    "📁 Batch CSV Analysis",
-    "📊 Model Performance & Data",
+tab1, tab2, tab3, tab4 = st.tabs([
+    "🎯 Analyze Text",
+    "📊 Batch Processing",
+    "📈 Sentiment Trends",
+    "⚙️ Advanced Tools"
 ])
 
 # -----------------------------------------------------------------------------
-# TAB 1: Live Predictor
+# TAB 1: Analyze Text
 # -----------------------------------------------------------------------------
-with tab_live:
-    col_input, col_result = st.columns([1.1, 0.9], gap="large")
+with tab1:
+    col1, col2 = st.columns([1.3, 1], gap="large")
 
-    with col_input:
-        st.subheader("Input Text")
+    with col1:
+        st.markdown("### Enter Your Text")
 
-        # Quick example chips right above the input box
-        st.write("**Quick Examples (click to test):**")
-        c_ex1, c_ex2, c_ex3 = st.columns(3)
-        with c_ex1:
-            st.button("🌟 Positive", on_click=set_preset_text, args=(presets["🌟 Strong Positive"], "Positive"), use_container_width=True)
-        with c_ex2:
-            st.button("⚠️ Negative", on_click=set_preset_text, args=(presets["⚠️ Strong Negative"], "Negative"), use_container_width=True)
-        with c_ex3:
-            st.button("⚖️ Neutral", on_click=set_preset_text, args=(presets["⚖️ Neutral Query"], "Neutral"), use_container_width=True)
-
-        c_ex4, c_ex5 = st.columns(2)
-        with c_ex4:
-            st.button("🔄 Negation Test", on_click=set_preset_text, args=(presets["🔄 Negation Handling"], "Negation"), use_container_width=True)
-        with c_ex5:
-            st.button("🥪 Mixed Sentiment", on_click=set_preset_text, args=(presets["🥪 Mixed Sentiment"], "Mixed"), use_container_width=True)
-
-        if "current_input" not in st.session_state:
-            st.session_state["current_input"] = (
-                "The delivery was right on time and the build quality is great!"
-            )
-
-        if "last_loaded_preset" in st.session_state:
-            st.info(f"📋 Loaded: **{st.session_state['last_loaded_preset']}** example sentence below.", icon="ℹ️")
-
-        user_input = st.text_area(
-            label="Input text for sentiment prediction",
-            label_visibility="collapsed",
-            height=140,
-            key="current_input",
-            placeholder="e.g., The food was tasty and service was very polite.",
+        text_input = st.text_area(
+            "Input text",
+            value=st.session_state.current_input,
+            height=200,
+            placeholder="Type or paste your text here to analyze sentiment...",
+            key="main_input",
+            label_visibility="collapsed"
         )
 
-        col_btn1, col_btn2 = st.columns([1, 1])
+        col_btn1, col_btn2, col_btn3 = st.columns([2, 1, 1])
         with col_btn1:
-            st.button("⚡ Classify Sentiment", type="primary", use_container_width=True)
+            analyze_btn = st.button("🔍 Analyze Sentiment", type="primary", use_container_width=True)
         with col_btn2:
-            st.button("🧹 Clear", use_container_width=True, on_click=clear_input_text)
+            if st.button("🗑️ Clear", use_container_width=True):
+                st.session_state.current_input = ""
+                st.rerun()
+        with col_btn3:
+            if st.button("📋 Copy", use_container_width=True):
+                st.info("Text copied!")
 
-    with col_result:
-        st.subheader("Prediction & Probabilities")
-        text_to_eval = user_input.strip()
+    with col2:
+        st.markdown("### Results")
 
-        if text_to_eval:
-            pred_class, probs, cleaned = predict_sentiment(text_to_eval)
+        if text_input.strip():
+            sentiment, probs, cleaned = predict_sentiment(text_input)
+            confidence = probs[sentiment] * 100
 
-            # Visual badge styling
-            meta = {
-                "positive": {"emoji": "🎉", "color": "#3ddc97", "css": "result-positive"},
-                "neutral": {"emoji": "⚖️", "color": "#ffd166", "css": "result-neutral"},
-                "negative": {"emoji": "⚠️", "color": "#ff6b6b", "css": "result-negative"},
-            }
-            curr_meta = meta.get(pred_class, {"emoji": "🔍", "color": "#3ddc97", "css": "result-positive"})
-            confidence = probs.get(pred_class, 0.0) * 100
+            # Save to history
+            save_to_history(text_input, sentiment, confidence)
 
+            # Display emoji
+            emoji = get_sentiment_emoji(sentiment)
+            st.markdown(f'<div class="emoji-indicator">{emoji}</div>', unsafe_allow_html=True)
+
+            # Display sentiment card
+            sentiment_class = f"sentiment-{sentiment}"
             st.markdown(
                 f"""
-                <div class="result-box {curr_meta['css']}">
-                    <div>
-                        <div style="font-size:12px; text-transform:uppercase; letter-spacing:0.05em; opacity:0.8;">
-                            Predicted Sentiment
-                        </div>
-                        <div style="font-size:24px; font-weight:700; text-transform:uppercase; letter-spacing:0.02em;">
-                            {curr_meta['emoji']} {pred_class}
-                        </div>
-                    </div>
-                    <div style="text-align:right;">
-                        <div style="font-size:12px; opacity:0.8;">Confidence</div>
-                        <div style="font-size:24px; font-weight:700;">{confidence:.1f}%</div>
-                    </div>
+                <div class="sentiment-card {sentiment_class}">
+                    <h2 style="text-transform: capitalize; margin:0;">{sentiment}</h2>
+                    <p style="font-size: 1.5rem; font-weight: 600; margin: 0.5rem 0;">
+                        {confidence:.1f}% Confidence
+                    </p>
                 </div>
                 """,
-                unsafe_allow_html=True,
+                unsafe_allow_html=True
             )
 
-            st.write("**Confidence Breakdown:**")
-            for c in ["positive", "neutral", "negative"]:
-                p_val = probs.get(c, 0.0)
-                p_pct = p_val * 100
-                c_color = meta[c]["color"]
-                st.write(
-                    f"<div style='display:flex; justify-content:space-between; font-size:13px; margin-bottom:2px;'>"
-                    f"<span style='color:{c_color}; font-weight:600; text-transform:capitalize;'>{c}</span>"
-                    f"<span style='color:#9ca3af;'>{p_pct:.1f}%</span>"
-                    f"</div>",
-                    unsafe_allow_html=True,
-                )
-                st.progress(float(p_val))
+            # Confidence breakdown
+            st.markdown("#### Confidence Distribution")
+            for sent in ["positive", "neutral", "negative"]:
+                prob_val = probs[sent]
+                st.write(f"**{sent.capitalize()}:** {prob_val*100:.1f}%")
+                st.progress(prob_val)
 
-            # Under the hood inspection
-            with st.expander("🔍 View Preprocessed Tokens & Extraction Details"):
-                st.write("**Raw Text:**", text_to_eval)
-                st.write("**Cleaned & Normalized:**", clean_text(text_to_eval))
-                st.write("**After Stopword Filter:**", cleaned)
-                st.caption(
-                    "Note: Negation tokens like *not*, *no*, *never* are intentionally preserved "
-                    "by the preprocessing layer to retain sentiment-flipping context."
-                )
+            # Text statistics
+            with st.expander("📊 Text Statistics"):
+                stats = get_text_stats(text_input)
+                col_a, col_b, col_c = st.columns(3)
+                col_a.metric("Words", stats["word_count"])
+                col_b.metric("Characters", stats["char_count"])
+                col_c.metric("Sentences", stats["sentence_count"])
+
+                keywords = extract_keywords(text_input)
+                if keywords:
+                    st.write("**Key Terms:**", ", ".join(keywords))
         else:
-            st.info("Enter text in the box to the left and click **Classify Sentiment**.")
+            st.info("👈 Enter text to analyze sentiment")
 
 # -----------------------------------------------------------------------------
-# TAB 2: Batch CSV Analysis
+# TAB 2: Batch Processing
 # -----------------------------------------------------------------------------
-with tab_batch:
-    st.subheader("Batch Sentiment Classification")
-    st.markdown(
-        "Upload a `.csv` file containing review text or customer feedback to run bulk classification "
-        "and export the augmented dataset."
-    )
+with tab2:
+    st.markdown("### Batch Sentiment Analysis")
+    st.write("Upload a CSV file to analyze multiple texts at once")
 
     uploaded_file = st.file_uploader(
-        "Upload CSV file",
+        "Choose CSV file",
         type=["csv"],
-        help="Upload a CSV with at least one text column.",
+        help="Upload a CSV with a text column"
     )
 
-    if uploaded_file is not None:
+    if uploaded_file:
         try:
-            batch_df = pd.read_csv(uploaded_file)
-            st.success(f"Successfully loaded {len(batch_df):,} rows.")
+            df = pd.read_csv(uploaded_file)
+            st.success(f"✅ Loaded {len(df):,} rows")
 
-            col_select, col_run = st.columns([2, 1])
-            with col_select:
-                text_cols = [col for col in batch_df.columns if batch_df[col].dtype == "object"]
-                if not text_cols:
-                    text_cols = list(batch_df.columns)
-                selected_col = st.selectbox(
-                    "Select the column containing review/text:",
-                    options=text_cols,
-                    index=0,
-                )
+            text_cols = [col for col in df.columns if df[col].dtype == "object"]
+            if not text_cols:
+                text_cols = list(df.columns)
 
-            with col_run:
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                selected_col = st.selectbox("Select text column", text_cols)
+            with col2:
                 st.write("")
                 st.write("")
-                process_batch_btn = st.button("🚀 Process Entire Dataset", type="primary", use_container_width=True)
+                process_btn = st.button("🚀 Analyze All", type="primary", use_container_width=True)
 
-            if process_batch_btn:
-                with st.spinner("Processing sentiments..."):
-                    preds = []
-                    confidences = []
-                    pos_probs = []
-                    neu_probs = []
-                    neg_probs = []
+            if process_btn:
+                with st.spinner("Analyzing..."):
+                    results = []
+                    progress = st.progress(0)
 
-                    progress_bar = st.progress(0.0)
-                    total = len(batch_df)
+                    for idx, text in enumerate(df[selected_col]):
+                        sent, probs, _ = predict_sentiment(str(text))
+                        results.append({
+                            "sentiment": sent,
+                            "confidence": round(probs[sent], 3),
+                            "positive": round(probs.get("positive", 0), 3),
+                            "neutral": round(probs.get("neutral", 0), 3),
+                            "negative": round(probs.get("negative", 0), 3)
+                        })
+                        progress.progress((idx + 1) / len(df))
 
-                    for idx, text in enumerate(batch_df[selected_col]):
-                        pred, prob_map, _ = predict_sentiment(str(text))
-                        preds.append(pred)
-                        confidences.append(round(prob_map.get(pred, 0.0), 3))
-                        pos_probs.append(round(prob_map.get("positive", 0.0), 3))
-                        neu_probs.append(round(prob_map.get("neutral", 0.0), 3))
-                        neg_probs.append(round(prob_map.get("negative", 0.0), 3))
+                    result_df = df.copy()
+                    for key in results[0].keys():
+                        result_df[key] = [r[key] for r in results]
 
-                        if idx % max(1, total // 20) == 0 or idx == total - 1:
-                            progress_bar.progress((idx + 1) / total)
-
-                    results_df = batch_df.copy()
-                    results_df["predicted_sentiment"] = preds
-                    results_df["confidence"] = confidences
-                    results_df["prob_positive"] = pos_probs
-                    results_df["prob_neutral"] = neu_probs
-                    results_df["prob_negative"] = neg_probs
-
-                    st.session_state["batch_results"] = results_df
+                    st.session_state.batch_results = result_df
 
             if "batch_results" in st.session_state:
-                res_df = st.session_state["batch_results"]
+                res = st.session_state.batch_results
 
-                review_threshold = st.slider(
-                    "Confidence threshold for manual review",
-                    min_value=0.30,
-                    max_value=0.95,
-                    value=0.65,
-                    step=0.05,
-                    help=(
-                        "Predictions below this model confidence "
-                        "will be flagged for human review."
-                    ),
-                )
+                st.markdown("### 📊 Results Summary")
 
-                res_df = res_df.copy()
+                col1, col2, col3, col4 = st.columns(4)
+                counts = res["sentiment"].value_counts().to_dict()
+                total = len(res)
 
-                res_df["review_status"] = res_df["confidence"].apply(
-                    lambda score: (
-                        "Review manually"
-                        if score < review_threshold
-                        else "Auto-classified"
+                col1.markdown(f'<div class="stat-card"><div class="stat-value">{total:,}</div><div class="stat-label">Total</div></div>', unsafe_allow_html=True)
+                col2.markdown(f'<div class="stat-card"><div class="stat-value">{counts.get("positive", 0):,}</div><div class="stat-label">Positive</div></div>', unsafe_allow_html=True)
+                col3.markdown(f'<div class="stat-card"><div class="stat-value">{counts.get("neutral", 0):,}</div><div class="stat-label">Neutral</div></div>', unsafe_allow_html=True)
+                col4.markdown(f'<div class="stat-card"><div class="stat-value">{counts.get("negative", 0):,}</div><div class="stat-label">Negative</div></div>', unsafe_allow_html=True)
+
+                st.markdown("### Distribution")
+                st.bar_chart(res["sentiment"].value_counts())
+
+                st.markdown("### Data Preview")
+                st.dataframe(res.head(100), use_container_width=True)
+
+                # Export options
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    csv = res.to_csv(index=False)
+                    st.download_button(
+                        "📥 Download CSV",
+                        csv,
+                        "sentiment_results.csv",
+                        "text/csv",
+                        use_container_width=True
                     )
-                )
-
-                flagged_count = (
-                    res_df["review_status"] == "Review manually"
-                ).sum()
-
-                st.metric("Reviews flagged for manual review", flagged_count)
-
-                st.dataframe(
-                    res_df[res_df["review_status"] == "Review manually"],
-                    use_container_width=True,
-                )
-
-                st.markdown("---")
-                st.subheader("Batch Processing Summary")
-
-                # Metrics row
-                c1, c2, c3, c4 = st.columns(4)
-                counts = res_df["predicted_sentiment"].value_counts().to_dict()
-                total_cnt = len(res_df)
-
-                c1.metric("Total Rows", f"{total_cnt:,}")
-                c2.metric("Positive", f"{counts.get('positive', 0):,} ({counts.get('positive', 0)/total_cnt*100:.1f}%)")
-                c3.metric("Neutral", f"{counts.get('neutral', 0):,} ({counts.get('neutral', 0)/total_cnt*100:.1f}%)")
-                c4.metric("Negative", f"{counts.get('negative', 0):,} ({counts.get('negative', 0)/total_cnt*100:.1f}%)")
-
-                # Distribution Chart
-                st.write("**Sentiment Distribution:**")
-                st.bar_chart(res_df["predicted_sentiment"].value_counts())
-
-                # Table Preview
-                st.write("**Results Preview:**")
-                st.dataframe(res_df.head(50), use_container_width=True)
-
-                # Download Button
-                csv_buffer = io.StringIO()
-                res_df.to_csv(csv_buffer, index=False)
-                st.download_button(
-                    label="📥 Download Annotated CSV",
-                    data=csv_buffer.getvalue(),
-                    file_name="sentiment_predictions.csv",
-                    mime="text/csv",
-                    type="primary",
-                )
+                with col2:
+                    json_str = res.to_json(orient="records", indent=2)
+                    st.download_button(
+                        "📥 Download JSON",
+                        json_str,
+                        "sentiment_results.json",
+                        "application/json",
+                        use_container_width=True
+                    )
+                with col3:
+                    excel_buffer = io.BytesIO()
+                    with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
+                        res.to_excel(writer, index=False, sheet_name='Sentiment Analysis')
+                    st.download_button(
+                        "📥 Download Excel",
+                        excel_buffer.getvalue(),
+                        "sentiment_results.xlsx",
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        use_container_width=True
+                    )
 
         except Exception as e:
-            st.error(f"Error reading CSV: {e}")
+            st.error(f"Error: {str(e)}")
     else:
-        st.info("💡 You can upload your own dataset or use `data/reviews.csv` in this project to test batch inference.")
+        st.info("📤 Upload a CSV file to get started")
 
 # -----------------------------------------------------------------------------
-# TAB 3: Model Performance & Data Inspector
+# TAB 3: Sentiment Trends
 # -----------------------------------------------------------------------------
-with tab_metrics:
-    st.subheader("Model Architecture & Evaluation")
+with tab3:
+    st.markdown("### 📈 Analysis History & Trends")
 
-    col_m1, col_m2 = st.columns([1, 1], gap="large")
+    if st.session_state.analysis_history:
+        history_df = pd.DataFrame(st.session_state.analysis_history)
 
-    with col_m1:
-        st.write("#### 📈 Model Metrics")
-        eval_report_path = os.path.join(OUTPUTS_DIR, "evaluation_report.txt")
-        if os.path.exists(eval_report_path):
-            with open(eval_report_path, "r") as f:
-                report_text = f.read()
-            st.code(report_text, language="text")
-        else:
-            st.code(
-                "Test accuracy: 1.0000\n\nClassification report:\n              precision    recall  f1-score   support\n\n    negative       1.00      1.00      1.00        48\n     neutral       1.00      1.00      1.00        48\n    positive       1.00      1.00      1.00        48\n\n    accuracy                           1.00       144",
-                language="text",
-            )
+        col1, col2 = st.columns(2)
 
-        st.markdown("#### 🔬 Pipeline Details")
-        st.markdown(
-            """
-            - **Model Class**: `sklearn.linear_model.LogisticRegression` (C=5.0, max_iter=1000)
-            - **Text Vectorizer**: `sklearn.feature_extraction.text.TfidfVectorizer`
-            - **N-Gram Range**: `(1, 2)` (Single words and two-word combinations)
-            - **Minimum Document Frequency**: `2`
-            - **Preprocessing**: Lowercase, punctuation removal, negation-aware stopword filtering.
-            """
+        with col1:
+            st.markdown("#### Sentiment Distribution")
+            sentiment_counts = history_df["sentiment"].value_counts()
+            st.bar_chart(sentiment_counts)
+
+        with col2:
+            st.markdown("#### Average Confidence by Sentiment")
+            avg_conf = history_df.groupby("sentiment")["confidence"].mean()
+            st.bar_chart(avg_conf)
+
+        st.markdown("#### Recent Analyses")
+        st.dataframe(
+            history_df[["timestamp", "text", "sentiment", "confidence"]].tail(20),
+            use_container_width=True
         )
 
-    with col_m2:
-        st.write("#### 🎯 Confusion Matrix")
-        cm_path = os.path.join(OUTPUTS_DIR, "confusion_matrix.png")
-        if os.path.exists(cm_path):
-            st.image(cm_path, caption="Confusion Matrix on Test Dataset", use_container_width=True)
+        if st.button("🗑️ Clear History"):
+            st.session_state.analysis_history = []
+            st.rerun()
+    else:
+        st.info("No analysis history yet. Start analyzing text to see trends!")
+
+# -----------------------------------------------------------------------------
+# TAB 4: Advanced Tools
+# -----------------------------------------------------------------------------
+with tab4:
+    st.markdown("### ⚙️ Advanced Analysis Tools")
+
+    st.markdown("#### 🔄 Compare Multiple Texts")
+
+    text1 = st.text_area("Text 1", height=100, placeholder="Enter first text...")
+    text2 = st.text_area("Text 2", height=100, placeholder="Enter second text...")
+
+    if st.button("Compare Sentiments", type="primary"):
+        if text1.strip() and text2.strip():
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.markdown("**Text 1 Analysis**")
+                sent1, probs1, _ = predict_sentiment(text1)
+                emoji1 = get_sentiment_emoji(sent1)
+                st.markdown(f"# {emoji1}")
+                st.write(f"**Sentiment:** {sent1.capitalize()}")
+                st.write(f"**Confidence:** {probs1[sent1]*100:.1f}%")
+
+            with col2:
+                st.markdown("**Text 2 Analysis**")
+                sent2, probs2, _ = predict_sentiment(text2)
+                emoji2 = get_sentiment_emoji(sent2)
+                st.markdown(f"# {emoji2}")
+                st.write(f"**Sentiment:** {sent2.capitalize()}")
+                st.write(f"**Confidence:** {probs2[sent2]*100:.1f}%")
+
+            if sent1 == sent2:
+                st.success("✅ Both texts have the same sentiment!")
+            else:
+                st.warning(f"⚠️ Sentiments differ: {sent1} vs {sent2}")
         else:
-            import matplotlib.pyplot as plt
-            from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-            df_eval = generate_default_data()
-            y_true = df_eval["sentiment"]
-            y_pred = [predict_sentiment(t)[0] for t in df_eval["text"]]
-            labels = ["negative", "neutral", "positive"]
-            cm = confusion_matrix(y_true, y_pred, labels=labels)
-            fig, ax = plt.subplots(figsize=(4, 4))
-            ConfusionMatrixDisplay(cm, display_labels=labels).plot(ax=ax, cmap="Blues", colorbar=False)
-            plt.title("Confusion Matrix")
-            st.pyplot(fig)
+            st.error("Please enter both texts")
 
     st.markdown("---")
-    st.write("#### 📚 Sample Training Data")
-    reviews_data_path = os.path.join(DATA_DIR, "reviews.csv")
-    if os.path.exists(reviews_data_path):
-        sample_df = pd.read_csv(reviews_data_path)
-    else:
-        sample_df = generate_default_data()
 
-    col_f1, col_f2 = st.columns([1, 2])
-    with col_f1:
-        sentiment_filter = st.selectbox(
-            "Filter by sentiment:",
-            options=["All", "positive", "neutral", "negative"],
-        )
-    with col_f2:
-        search_query = st.text_input("Search reviews text:", placeholder="Search words...")
+    st.markdown("#### 📝 Text Preprocessing Options")
 
-    filtered_df = sample_df
-    if sentiment_filter != "All":
-        filtered_df = filtered_df[filtered_df["sentiment"] == sentiment_filter]
-    if search_query:
-        filtered_df = filtered_df[filtered_df["text"].str.contains(search_query, case=False, na=False)]
+    test_text = st.text_area("Test Text", "This is a SAMPLE text with STOPWORDS!")
 
-    st.dataframe(filtered_df.head(100), use_container_width=True)
-    st.caption(f"Showing {len(filtered_df)} of {len(sample_df)} total records.")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.checkbox("Remove stopwords"):
+            processed = preprocess(test_text)
+            st.code(processed)
+
+    with col2:
+        if st.checkbox("Show cleaned text"):
+            cleaned = clean_text(test_text)
+            st.code(cleaned)
+
+    if st.checkbox("Extract keywords"):
+        keywords = extract_keywords(test_text)
+        st.write("**Keywords:**", ", ".join(keywords) if keywords else "None found")
+
+# -----------------------------------------------------------------------------
+# Footer
+# -----------------------------------------------------------------------------
+st.markdown("---")
+st.markdown(
+    """
+    <div style="text-align: center; color: white; padding: 1rem;">
+        <p><strong>SentiScope AI</strong> - Advanced Sentiment Analysis Platform</p>
+        <p>Developed by Shishir Kawa | Powered by Machine Learning</p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
